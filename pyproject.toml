@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dupefind"
+version = "0.0.1"
+description = "Fast duplicate file finder with content hashing"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "27t679c2m8-bit" }]
+keywords = ["duplicates", "files", "cli", "hash"]
+classifiers = [
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: System :: Filesystems",
+]
+
+[project.scripts]
+dupefind = "dupefind.cli:main"
+
+[tool.setuptools]
+packages = ["dupefind"]
