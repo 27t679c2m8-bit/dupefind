@@ -12,11 +12,21 @@ every byte twice.
 pip install dupefind
 ```
 
-## Usage
+## Quickstart
 
 ```bash
-dupefind            # scan current directory
-dupefind ~/Downloads
+dupefind                       # scan current directory
+dupefind ~/Downloads           # scan a directory
+dupefind . --min-size 1048576  # only files >= 1 MB
+```
+
+## Development
+
+```bash
+git clone https://github.com/27t679c2m8-bit/dupefind
+cd dupefind
+pip install -e .
+python -m unittest discover -s tests
 ```
 
 ## License
