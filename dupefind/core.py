@@ -7,6 +7,7 @@ import os
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Callable
 
 CHUNK_SIZE = 1024 * 1024
 DEFAULT_WORKERS = min(8, (os.cpu_count() or 2))
@@ -24,7 +25,7 @@ def _file_hash(path: Path, chunk_size: int = CHUNK_SIZE) -> str:
     return digest.hexdigest()
 
 
-def _hash_group(paths: list[Path]) -> tuple[str, list[Path]]:
+def _hash_group(paths: list[Path]) -> dict[str, list[Path]]:
     """Group same-size paths by digest, skipping unreadable files."""
     by_hash: dict[str, list[Path]] = defaultdict(list)
     with ThreadPoolExecutor(max_workers=DEFAULT_WORKERS) as pool:
@@ -33,13 +34,19 @@ def _hash_group(paths: list[Path]) -> tuple[str, list[Path]]:
     return by_hash
 
 
-def find_duplicates(root: Path, min_size: int = 0) -> dict[str, list[Path]]:
+def find_duplicates(
+    root: Path,
+    min_size: int = 0,
+    exclude: Callable[[Path], bool] | None = None,
+) -> dict[str, list[Path]]:
     """Walk `root` and group files by (size, sha256) content identity."""
     by_size: dict[int, list[Path]] = defaultdict(list)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames.sort()
         for name in sorted(filenames):
             path = Path(dirpath) / name
+            if exclude is not None and exclude(path):
+                continue
             try:
                 if not path.is_file():
                     continue
