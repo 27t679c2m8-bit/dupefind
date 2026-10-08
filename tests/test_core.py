@@ -52,3 +52,31 @@ class FindDuplicatesTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExcludeTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_exclude_by_name(self) -> None:
+        (self.root / "keep1.txt").write_bytes(b"dup")
+        (self.root / "keep2.txt").write_bytes(b"dup")
+        (self.root / "skip.txt").write_bytes(b"dup")
+        result = find_duplicates(
+            self.root, exclude=lambda p: p.name == "skip.txt",
+        )
+        self.assertEqual(len(result), 1)
+        group = next(iter(result.values()))
+        self.assertEqual(len(group), 2)
+
+    def test_exclude_removes_duplicate_group(self) -> None:
+        (self.root / "a.txt").write_bytes(b"dup")
+        (self.root / "b.txt").write_bytes(b"dup")
+        result = find_duplicates(
+            self.root, exclude=lambda p: p.name == "a.txt",
+        )
+        self.assertEqual(result, {})
