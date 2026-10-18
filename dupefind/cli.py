@@ -30,6 +30,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="ignore files/directories matching GLOB (repeatable)",
     )
     parser.add_argument(
+        "--quiet", action="store_true",
+        help="suppress progress output on stderr",
+    )
+    parser.add_argument(
         "--version", action="version", version=f"dupefind {__version__}",
     )
     return parser
@@ -46,6 +50,8 @@ def _excluded(path: Path, patterns: list[str]) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if not args.quiet:
+        print(f"scanning {args.path} …", file=sys.stderr)
     duplicates = find_duplicates(
         args.path, min_size=args.min_size,
         exclude=lambda p: _excluded(p, args.exclude),
