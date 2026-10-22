@@ -39,7 +39,12 @@ def find_duplicates(
     min_size: int = 0,
     exclude: Callable[[Path], bool] | None = None,
 ) -> dict[str, list[Path]]:
-    """Walk `root` and group files by (size, sha256) content identity."""
+    """Walk `root` and group files by (size, sha256) content identity.
+
+    Files sharing an inode (hard links) are counted once, so hard-linked
+    backups do not show up as duplicates.
+    """
+    seen_inodes: set[tuple[int, int]] = set()
     by_size: dict[int, list[Path]] = defaultdict(list)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames.sort()
@@ -48,9 +53,14 @@ def find_duplicates(
             if exclude is not None and exclude(path):
                 continue
             try:
+                stat = path.stat()
                 if not path.is_file():
                     continue
-                size = path.stat().st_size
+                inode = (stat.st_dev, stat.st_ino)
+                if inode in seen_inodes:
+                    continue
+                seen_inodes.add(inode)
+                size = stat.st_size
             except OSError:
                 continue
             if size >= min_size:
