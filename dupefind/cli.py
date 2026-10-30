@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import json
 import sys
 from pathlib import Path
 
@@ -30,6 +31,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="ignore files/directories matching GLOB (repeatable)",
     )
     parser.add_argument(
+        "--json", action="store_true",
+        help="emit results as a JSON array of duplicate groups",
+    )
+    parser.add_argument(
         "--quiet", action="store_true",
         help="suppress progress output on stderr",
     )
@@ -48,16 +53,31 @@ def _excluded(path: Path, patterns: list[str]) -> bool:
     return False
 
 
+def _print_json(duplicates: dict[str, list[Path]]) -> None:
+    payload = [
+        {"sha256": digest, "files": [str(p) for p in group]}
+        for digest, group in sorted(duplicates.items())
+    ]
+    json.dump(payload, sys.stdout, indent=2)
+    sys.stdout.write("\n")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if not args.quiet:
+    if not args.quiet and not args.json:
         print(f"scanning {args.path} …", file=sys.stderr)
     duplicates = find_duplicates(
         args.path, min_size=args.min_size,
         exclude=lambda p: _excluded(p, args.exclude),
     )
     if not duplicates:
-        print("no duplicates found", file=sys.stderr)
+        if args.json:
+            _print_json({})
+        else:
+            print("no duplicates found", file=sys.stderr)
+        return 0
+    if args.json:
+        _print_json(duplicates)
         return 0
     for index, (digest, group) in enumerate(sorted(duplicates.items()), 1):
         print(f"#{index} ({digest[:12]}…, {len(group)} files)")
