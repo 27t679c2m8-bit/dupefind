@@ -23,3 +23,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - Stable directory traversal order for reproducible output
+
+## [0.3.0] - 2026-11-03
+
+### Added
+
+- `--quiet` flag to suppress progress output
+- `--json` flag for machine-readable results
+- Hard-link deduplication via inode tracking
+
+### Changed
+
+- Progress line now prints the scanned root before walking
