@@ -9,20 +9,34 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Callable
 
+try:  # optional accelerator, falls back to hashlib
+    import xxhash as _xxhash  # type: ignore[import-not-found]
+except ImportError:
+    _xxhash = None
+
 CHUNK_SIZE = 1024 * 1024
 DEFAULT_WORKERS = min(8, (os.cpu_count() or 2))
 
 
 def _file_hash(path: Path, chunk_size: int = CHUNK_SIZE) -> str:
-    """Return the SHA-256 hex digest of a file."""
-    digest = hashlib.sha256()
+    """Return a content digest of a file (xxh128 or SHA-256)."""
+    if _xxhash is not None:
+        digest = _xxhash.xxh128()
+        with path.open("rb") as fh:
+            while True:
+                block = fh.read(chunk_size)
+                if not block:
+                    break
+                digest.update(block)
+        return digest.hexdigest()
+    hasher = hashlib.sha256()
     with path.open("rb") as fh:
         while True:
             block = fh.read(chunk_size)
             if not block:
                 break
-            digest.update(block)
-    return digest.hexdigest()
+            hasher.update(block)
+    return hasher.hexdigest()
 
 
 def _hash_group(paths: list[Path]) -> dict[str, list[Path]]:
@@ -39,7 +53,7 @@ def find_duplicates(
     min_size: int = 0,
     exclude: Callable[[Path], bool] | None = None,
 ) -> dict[str, list[Path]]:
-    """Walk `root` and group files by (size, sha256) content identity.
+    """Walk `root` and group files by (size, content digest) identity.
 
     Files sharing an inode (hard links) are counted once, so hard-linked
     backups do not show up as duplicates.
