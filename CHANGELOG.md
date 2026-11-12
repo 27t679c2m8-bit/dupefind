@@ -35,3 +35,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Progress line now prints the scanned root before walking
+
+## [0.3.1] - 2026-11-12
+
+### Added
+
+- `CONTRIBUTING.md` contributor guide
+
+### Changed
+
+- Document optional `xxhash` acceleration in README
