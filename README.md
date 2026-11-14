@@ -46,3 +46,12 @@ python -m unittest discover -s tests
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## FAQ
+
+**How is dupefind different from fdupes or rmlint?**
+
+dupefind is pure-stdlib Python (no C extensions), ships as a single installable
+package, and exposes a machine-readable `--json` mode for scripting — making it
+easy to embed in backup and cleanup pipelines on hosts where dedicated C tools
+are unavailable.
